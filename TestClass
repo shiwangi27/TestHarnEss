@@ -1,0 +1,120 @@
+package ReflectionPkg;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.*;
+
+public class TestClass {
+
+	public int a=12;
+	public int b;
+	
+	TestClass(){}
+	
+	TestClass(int a, int b)
+	{
+		this.a=a;
+		this.b=b;
+		System.out.println("Inside Constructor: "+ (a+b));	
+	}
+
+	//Generic Type
+	List<String> list=new ArrayList<String>();
+	String l= "Something";
+	
+	public List<String> getListMethod(List<String> s)    // Generic Method with generic Argument type
+	{
+		this.list=s;             
+	    return this.list; 
+	}
+
+		
+	public static String f(int p)
+	{
+		System.out.println("Inside method f and Argument: Type Int");
+		if(p>5)	
+			return "Shiwangi's code";		// Length Count 15
+		return "I exit f";					// Length Count 8
+	}
+	
+	public static int h(String s){
+		System.out.println("Inside method h and Argument Type: string");
+		System.out.println("Returned Value "+ s.length());
+		if (s == null)
+			return 0;      
+		else 
+			return s.length();   // Returns the length of the String 
+	} 
+	
+	public static double g(int m,double n)  throws Exception
+	 {
+		System.out.println("Inside method g and Argument Type: int OR double");
+		if(m>n)
+		{
+			System.out.println("Return Value: "+ m);
+			return m;
+		}
+		else
+		{
+			System.out.println("Return Value: "+ n);
+			return n;
+	 
+		}
+	}
+	
+	public static int x(int i)
+	{
+		System.out.println("Inside method x and Argument Type: integer");
+		while (i>=0)
+		{
+			i--;  
+		}
+		System.out.println("Return Value: "+i);
+		return i;
+	}
+	
+	public double y(double d)
+	{
+		System.out.println("Inside Y and Argument Type: double "+ d);
+		return d;
+		
+	}
+	
+
+	//Non-static Nested Class
+	protected class NestedTestClass{
+		
+		//Constructor 
+			NestedTestClass()
+			{
+				System.out.println("Inside Nested Class");
+			};
+			
+		//Access private members of the Outer Class
+		public void check_accessibility(int x)
+		{
+			a=x;
+			System.out.println("Value of private member from Nested Class a : "+a);
+		}
+		
+	}
+	
+	public static void main(String args[])
+	{
+		TestClass tc=new TestClass(23,43);
+		NestedTestClass nc = tc.new NestedTestClass();
+		
+		f(2);
+		f(h("Shiwangi"));
+		///f(h(g(2,3.76))));
+		
+	}
+	
+}
+
+
+
+
+
+
+
