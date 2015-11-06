@@ -1,0 +1,251 @@
+package ReflectionPkg;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.List;
+import ReflectionPkg.TestClass.NestedTestClass;
+
+
+public class TestHarnEss {
+
+		public static void main(String args[])
+		{
+			Class <?> noParams[]={};
+			Class paramString[] = new Class[1];
+			paramString[0]=String.class;
+			Class<?> paramInt[]=new Class[3];
+			paramInt[0]=Integer.TYPE;
+			paramInt[1]=Integer.TYPE;
+			Class<?> paramDouble[]=new Class[1];
+			paramDouble[0]=Double.TYPE;
+			
+			
+			try{
+				//Create object of type Class to access its members and methods
+				Class<?> cls= Class.forName(args[1]);
+				
+				//Get the name of the CLass Under Test with and without package Names
+				String className = cls.getName();
+				System.out.println("----------Access Classes----------");
+				System.out.println(className);
+				String onlyclassname= cls.getSimpleName();
+				System.out.println(onlyclassname);
+				
+				
+	     //********************* Accessing non-static Nested Class and its member functions***********************
+				Object outerclass=Class.forName(args[1]).newInstance(); 
+				 
+				//Constructor required to access inner class 
+				Constructor<NestedTestClass> cc= TestClass.NestedTestClass.class.getDeclaredConstructor(outerclass.getClass());
+				TestClass.NestedTestClass innerclass=(NestedTestClass) cc.newInstance(outerclass); 
+				
+				System.out.println("----------Inside Nested class-------------------");
+				System.out.println(innerclass);
+			
+				Object o_nc=cc.newInstance(outerclass);      				//Object to access nested class methods 
+				Method mc=o_nc.getClass().getMethod("check_accessibility", paramInt[0]);
+				mc.invoke(o_nc, 1000);                                       // Should print 1000 from nested class method
+				mc.getModifiers();
+
+				
+		//******************** Get all the Methods of the Class Under Test in Method obj array***************** 
+				Method meths[] = cls.getMethods();
+				System.out.println("-------------------Here are my CUT methods--------------------");
+				for(Method m : meths)
+					{
+						System.out.println(m);
+					}
+					
+				//Get Constructor , initialize, set values and print return value
+				Constructor c=cls.getDeclaredConstructor(paramInt[0],paramInt[0]);
+				TestClass constr_tc=(TestClass)c.newInstance(34,43);
+				
+				// Create Object of the class to access the Fields and Methods of the CUT 
+				Object obj= cls.newInstance();
+				
+				
+		// ******************Access private members of the CUT*****************
+				TestClass tc=new TestClass();
+				// Gets Field a from the TestClass 
+				Field field=cls.getDeclaredField("a");
+				//field.setAccessible(true);
+				
+				field.getModifiers();
+				field.set(tc,field.get(tc));
+				System.out.println("Accessing private fields: return private int a= " + tc.a);
+				
+				
+		//******************Accessing all the fields and its modifiers*******************
+				
+				System.out.println("-------------Here are my CUT fields and its Modifiers-----------------");
+				Field fld[]=cls.getDeclaredFields();
+				for(Field fl: fld)
+				{
+					int i=fl.getModifiers();
+					fl.setAccessible(true);
+					System.out.println(fl+"\t"+i);
+				}			
+				
+				
+	     //--------------Testing Combinations Passing Parameters to methods and Passing return Values from ancestor methods-----------------------------------------------------------------------------------				
+		  /**	Method object       function names   
+					method				f
+					method2				h
+					method3				g
+					method4				y
+					method5				x
+		 **/						
+				
+	    //*****************Taking inputs from inputs.txt*********************************************************
+				
+			
+				String filename= "inputs.txt";
+				String lines=null;
+				FileReader fr=new FileReader(filename);
+				BufferedReader br=new BufferedReader(fr);
+				
+				int int_inputs[]=new int[20];
+				String string_inputs[] = new String[10];
+				double double_inputs[] = new double[20];
+				
+				lines=br.readLine();
+				int index=0;
+				for (String i : lines.split(","))
+				{
+					int_inputs[index]=Integer.parseInt(i);
+					index++;
+				}
+				lines=br.readLine();
+				index=0;
+				for (String i : lines.split(","))
+				{
+					string_inputs[index]=i;
+					index++;
+				}
+				index=0;
+				lines=br.readLine();
+				for (String i : lines.split(","))
+				{
+					double_inputs[index]=Double.parseDouble(i);
+					index++;
+				}
+				
+				//Declaring methods with matching Return types
+				
+				Method method,method2,method3,method4,method5;
+				method= cls.getDeclaredMethod("f", paramInt[0]);
+				method2= cls.getDeclaredMethod("h", paramString[0]);
+				method3=cls.getDeclaredMethod("g", paramInt[0],paramDouble[0]);
+				method4=cls.getDeclaredMethod("y",paramDouble[0]);
+				method5=cls.getDeclaredMethod("x",paramInt[0]);
+				
+				
+	           System.out.println("----------Testing with Different Integer Inputs-------------------");		
+			//Methods that Take Integer Parameters
+			for(Integer i: int_inputs)
+				{
+				System.out.println("--------------------------f()--------------------------------");
+				// Accessing method f from CUT     ->  f()
+					method.invoke(obj,i);
+					System.out.println("Return Type :" + method.getReturnType());
+				
+					System.out.println("------------Combinations of two methods--- h(f())----------------------------");
+				// Combinations of two methods f and h     ->  h(f())
+					method2.invoke(obj,method.invoke(obj,i));
+					System.out.println("Return Type :" + method2.getReturnType());
+					
+					System.out.println("-------------------Combinations of three methods h(g(f()))---------------------------");
+				//Combinations of three methods f, g and h    ->  h(g(f()))
+					method3.invoke(obj, method2.invoke(obj,method.invoke(obj, (i+29))), i);
+					System.out.println("Return Type :" + method3.getReturnType());
+
+				}
+			System.out.println("----------Testing with Different Double Inputs-------------------");		
+				
+			for (Double d: double_inputs )   // Passing double parameters to methods arguments
+				{
+				
+				// g()
+				System.out.println("--------------------------g()--------------------------------");
+
+					method3.invoke(obj, 20,d);
+					System.out.println("Return Type :" + method3.getReturnType());
+					
+					
+				System.out.println("-----------------------Combinations of two methods  g(y())-------------------------------");
+					
+				// Combinations of two methods     ->   g(y()) 
+					method3.invoke(obj,(5),method4.invoke(obj, d));
+					System.out.println("Return Type :" + method3.getReturnType());
+					System.out.println("---------------Combinations of two methods y(g())------------------------------");
+
+				// Combinations of two methods y(g())
+					method4.invoke(obj, method3.invoke(obj, 7,d));
+					System.out.println("Return Type :" + method4.getReturnType());
+
+					System.out.println("-----------------Combination of four methods----y(g(h(f))) --------------------------");
+				
+				//Combination of four methods         ->   y(g(h(f))) 
+					method4.invoke(obj, method3.invoke(obj, method2.invoke(obj, method.invoke(obj, 12)),d));
+					System.out.println("Return Type :" + method4.getReturnType());
+			
+					System.out.println("---------------Combination of g(g(g(y())))---------------------------");
+
+				//Combination of g(g(g(y())))
+					method3.invoke(obj,(33),method3.invoke(obj,(7),method3.invoke(obj,5,method4.invoke(obj,8))));
+					System.out.println("Return Type :" + method3.getReturnType());
+			}
+			
+			System.out.println("----------Testing with Different String Inputs-------------------");
+			
+			for (String s: string_inputs)
+			{
+				//  h()
+				System.out.println("--------------------------h()--------------------------------");
+					method2.invoke(obj, s);
+					System.out.println("Return Type :" + method2.getReturnType());
+		
+					System.out.println("-----------------Combination of f(h(f(h)))-------------------");
+				// Combination of f(h(f(h)))
+					Object phi =  method.invoke(obj, method2.invoke(obj, method.invoke(obj, method2.invoke(obj, s))));
+					System.out.println("Return Type :" + method.getReturnType());
+					System.out.println(phi);
+			
+					System.out.println("----------------Combination of x(x(x(h)))--------------------");			
+					
+				//Combination of x(x(x(h))) 
+					method5.invoke(obj,method5.invoke(obj, method5.invoke(obj,method2.invoke(obj,s ))));
+					System.out.println("Return Type :" + method5.getReturnType());
+
+				
+			}		
+			
+				
+		//----------------------------------------------------------------------------------------------------------------------		
+				// Accessing Generic Return Type and method
+		
+			System.out.println("----------Return Generic Method and Return Type-------------------");		
+				Method method6 = TestClass.class.getMethod("getListMethod", List.class);  // Invoke the method of Generic Type with argument Type  
+				Type returnType = method6.getGenericReturnType();    
+				System.out.println("Return Type:" + returnType);    //Gives return type of java.util.List for getListMethod method
+				
+				if(returnType instanceof ParameterizedType){
+				    ParameterizedType type = (ParameterizedType) returnType;
+				    Type[] typeArgs = type.getActualTypeArguments();     
+				    
+				    for(Type ta : typeArgs)
+				    {
+				        Class<?> typeArgClass = (Class<?>) ta;
+				        System.out.println("Argument Type = " + typeArgClass);
+				    }
+				}
+				
+				
+		} 
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}			
+}
+}
+		
